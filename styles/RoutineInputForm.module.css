@@ -1,0 +1,128 @@
+.form_wrapper {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100vw;
+  height: 100vh;
+  background: var(--bg_white);
+}
+
+.form {
+  max-width: 450px;
+  padding: 15px 20px;
+  border-radius: 10px;
+  box-shadow: var(--bg_form_white_shadow);
+  color: var(--dark_text);
+  background: var(--bg_form_white);
+}
+
+.form_group {
+  /* height: 100%; */
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 15px;
+}
+
+.form_group label {
+  margin-bottom: 5px;
+}
+
+.form_group select,
+/* .form_group input, */
+.form_group .input {
+  display: block;
+  width: 100%;
+  height: 45px;
+  padding-left: 20px;
+  font-size: var(--FS_sm);
+  font-weight: var(--FW_bold);
+  letter-spacing: 0.5px;
+  outline: none;
+  border: none;
+  border-radius: 25px;
+  margin-top: 5px;
+  color: #333;
+}
+
+.form_group select {
+  cursor: pointer;
+}
+
+.red_color {
+  color: red;
+}
+
+.form_group select,
+.form_group .input {
+  background: var(--bg_form_white);
+  box-shadow: 2px 2px 5px #babecc, -5px -5px 10px #ffffff73;
+}
+
+.form_group select:focus,
+/* .form_group input:hover , */
+.form_group .input:focus {
+  color: #595959;
+  box-shadow: inset 2px 2px 5px #babecc, inset -5px -5px 10px #ffffff73;
+  -webkit-box-shadow: inset 2px 2px 5px #babecc, inset -5px -5px 10px #ffffff73;
+  -moz-box-shadow: inset 2px 2px 5px #babecc, inset -5px -5px 10px #ffffff73;
+}
+
+.form_group label {
+  display: block;
+  padding-left: 20px;
+  font-size: var(--FS_sm);
+  font-weight: var(--FW_medium);
+}
+
+.btn_group {
+  display: flex;
+  flex: wrap;
+  justify-content: space-between;
+  align-content: center;
+}
+
+.input.number {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.input.number input {
+  width: calc(100% - 50px);
+  background: var(--bg_form_white);
+  font-size: var(--FS_sm);
+  font-weight: var(--FW_bold);
+  outline: none;
+  border: none;
+}
+
+.input::-webkit-input-placeholder {
+  /* Edge */
+  color: #666;
+  font-weight: normal;
+}
+
+.input:-ms-input-placeholder {
+  /* Internet Explorer 10-11 */
+  color: #666;
+  font-weight: normal;
+}
+
+.input::placeholder {
+  color: #666;
+  font-weight: normal;
+  font-size: 10px;
+}
+
+.error {
+  color: var(--red);
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 5px;
+  margin-left: 20px;
+  text-align: center;
+  letter-spacing: 0.8px;
+}

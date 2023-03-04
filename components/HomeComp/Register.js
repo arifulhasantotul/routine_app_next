@@ -1,6 +1,7 @@
 import styles from "@/styles/Register.module.css";
 import countryData from "@/utils/countriesData.json";
-import { useState } from "react";
+import { getDataFromStorage, saveToLocalStorage } from "@/utils/temporarySave";
+import { useEffect, useState } from "react";
 import RoundedFormButton from "../FormButton/RoundedFormButton";
 
 const Register = () => {
@@ -25,7 +26,6 @@ const Register = () => {
   ];
 
   const checkValidation = (e) => {
-    // warning sign: &#9888;
     const { name, value } = e.target;
     if (name === "name") {
       if (!value) {
@@ -52,8 +52,7 @@ const Register = () => {
           ...prev,
           [name]: `Phone number required!`,
         }));
-      }
-      if (value.length !== formData.numLength) {
+      } else if (value.length !== +formData.numLength) {
         setErrFormData((prev) => ({
           ...prev,
           [name]: `Phone number must be ${formData.numLength} digits`,
@@ -75,6 +74,7 @@ const Register = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+
     if (name === "country") {
       if (!value) {
         setFormData((prev) => ({
@@ -109,11 +109,30 @@ const Register = () => {
     document.getElementById("phone").value = "";
   };
 
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const invalidData = Object.values(errFormData).filter((item) => item);
+    if (invalidData.length > 0) {
+      alert("Please fill up the form correctly!");
+      return;
+    }
+
+    saveToLocalStorage("routineAccount", formData);
+  };
+
+  useEffect(() => {
+    const data = getDataFromStorage(localStorage, "routineAccount");
+    if (data) {
+      setFormData(data);
+    }
+    // console.log(data);
+  }, []);
+
   return (
     <>
       <div className={styles.form_wrapper}>
         <h2>Create Account</h2>
-        <form className={styles.form}>
+        <form className={styles.form} onSubmit={handleSubmit}>
           <div className={styles.form_group}>
             <label htmlFor="name">Name</label>
             <input
@@ -187,6 +206,7 @@ const Register = () => {
               name="country"
               id="country"
               onChange={handleChange}
+              value={`${formData?.country}${formData?.dialCode}*${formData?.numLength}`}
               required
             >
               <option value="">--Select Country--</option>
@@ -204,7 +224,7 @@ const Register = () => {
           </div>
 
           <div className={styles.form_group}>
-            <label htmlFor="batch">Phone:</label>
+            <label htmlFor="batch">Phone</label>
             <span className={`${styles.input} ${styles.number}`}>
               {formData?.dialCode}
               <input
@@ -213,6 +233,7 @@ const Register = () => {
                 id="phone"
                 className="hide_numbers_arrow"
                 placeholder="+880 xxxxxxxxx"
+                value={formData?.phone}
                 onChange={handleChange}
                 onBlur={checkValidation}
                 disabled={!formData?.dialCode}
