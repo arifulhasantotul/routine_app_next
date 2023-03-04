@@ -1,6 +1,7 @@
 import styles from "@/styles/RoutineInputForm.module.css";
 import { getDataFromStorage } from "@/utils/temporarySave";
 import { useEffect, useState } from "react";
+import { MdClose } from "react-icons/md";
 import { checkValidation } from "./validation";
 
 const RoutineInputForm = () => {
@@ -52,6 +53,13 @@ const RoutineInputForm = () => {
     document.getElementById("activityName").value = "";
     document.getElementById("activityStartTime").value = "";
     document.getElementById("activityEndTime").value = "";
+  };
+
+  const deleteActivity = (value) => {
+    const newActivities = activities.filter(
+      (item) => item.activityName !== value
+    );
+    setActivities(newActivities);
   };
 
   const handleChange = (e) => {
@@ -163,11 +171,21 @@ const RoutineInputForm = () => {
             <ul className={styles.list_activity}>
               <h4 className={styles.activity_heading}>Activities</h4>
               {activities.map((item, idx) => (
-                <li key={idx}>
-                  {" "}
-                  {idx + 1}. {item?.activityName} time from{" "}
-                  {item?.activityStartTime} to {item?.activityEndTime}
-                </li>
+                <span className={styles.list_activity_item} key={idx}>
+                  <li>
+                    {" "}
+                    {idx + 1}. {item?.activityName} time from{" "}
+                    {item?.activityStartTime} to {item?.activityEndTime}{" "}
+                  </li>
+                  <span
+                    className={styles.dlt_icon}
+                    title="Remove activity from list"
+                  >
+                    <MdClose
+                      onClick={() => deleteActivity(item?.activityName)}
+                    />
+                  </span>
+                </span>
               ))}
             </ul>
           )}
