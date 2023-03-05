@@ -322,6 +322,7 @@ const RoutineInputForm = () => {
                 type="text"
                 name="activityName"
                 id="activityName"
+                placeholder="e.g. GYM, Sports, Reading, Coding, etc."
                 className={styles.input}
                 value={newActivity?.activityName}
                 onChange={handleChangeActivity}
