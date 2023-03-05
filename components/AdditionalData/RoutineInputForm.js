@@ -1,5 +1,6 @@
 import styles from "@/styles/RoutineInputForm.module.css";
 import { getDataFromStorage } from "@/utils/temporarySave";
+import { militaryTimeToStandard } from "@/utils/timeConversion";
 import { useEffect, useState } from "react";
 import { MdClose } from "react-icons/md";
 import { checkValidation } from "./validation";
@@ -15,6 +16,17 @@ const RoutineInputForm = () => {
   const [formData, setFormData] = useState(initialData);
   const [errFormData, setErrFormData] = useState(initialData);
   const [activities, setActivities] = useState([]);
+  const [mainActivities, setMainActivities] = useState([
+    "Coaching",
+    "Private",
+    "College",
+    "Batch",
+  ]);
+  const [mainActivity, setMainActivity] = useState({
+    mainActivityName: "",
+    mainActivityStartTime: "",
+    mainActivityEndTime: "",
+  });
   const [newActivity, setNewActivity] = useState({
     activityName: "",
     activityStartTime: "",
@@ -23,36 +35,84 @@ const RoutineInputForm = () => {
 
   const handleChangeActivity = (e) => {
     const { name, value } = e.target;
-    setNewActivity((prv) => ({
-      ...prv,
-      [name]: value,
-    }));
+    if (name && name.startsWith("mainActivity")) {
+      setMainActivity((prv) => ({
+        ...prv,
+        [name]: value,
+      }));
+    } else {
+      setNewActivity((prv) => ({
+        ...prv,
+        [name]: value,
+      }));
+    }
   };
 
-  const addActivity = () => {
-    if (
-      !newActivity?.activityName ||
-      !newActivity?.activityStartTime ||
-      !newActivity?.activityEndTime
-    )
-      return;
+  // console.log(activities);
+  // console.log("main", mainActivity);
+  // console.log("ECA", newActivity);
 
-    const exists = activities.find(
-      (item) => item.activityName === newActivity.activityName
-    );
-    if (exists) {
-      alert("Activity already exists");
-      return;
+  const clearActivity = (isMainActivity = false) => {
+    if (isMainActivity) {
+      setMainActivity({
+        mainActivityName: "",
+        mainActivityStartTime: "",
+        mainActivityEndTime: "",
+      });
+    } else {
+      setNewActivity({
+        activityName: "",
+        activityStartTime: "",
+        activityEndTime: "",
+      });
     }
-    setActivities((prv) => [...prv, newActivity]);
-    setNewActivity({
-      activityName: "",
-      activityStartTime: "",
-      activityEndTime: "",
-    });
-    document.getElementById("activityName").value = "";
-    document.getElementById("activityStartTime").value = "";
-    document.getElementById("activityEndTime").value = "";
+    document.getElementById(
+      isMainActivity ? "mainActivityName" : "activityName"
+    ).value = "";
+    document.getElementById(
+      isMainActivity ? "mainActivityStartTime" : "activityStartTime"
+    ).value = "";
+    document.getElementById(
+      isMainActivity ? "mainActivityEndTime" : "activityEndTime"
+    ).value = "";
+  };
+
+  const addActivity = (isMainActivity = false) => {
+    if (isMainActivity) {
+      if (
+        !mainActivity.mainActivityName ||
+        !mainActivity.mainActivityStartTime ||
+        !mainActivity.mainActivityEndTime
+      )
+        return;
+
+      const exists = activities.find(
+        (item) => item.activityName === mainActivity.mainActivityName
+      );
+      if (exists) {
+        alert("Activity already exists");
+        return;
+      }
+      setActivities((prv) => [...prv, mainActivity]);
+      clearActivity(true);
+    } else {
+      if (
+        !newActivity?.activityName ||
+        !newActivity?.activityStartTime ||
+        !newActivity?.activityEndTime
+      )
+        return;
+
+      const exists = activities.find(
+        (item) => item.activityName === newActivity.activityName
+      );
+      if (exists) {
+        alert("Activity already exists");
+        return;
+      }
+      setActivities((prv) => [...prv, newActivity]);
+      clearActivity();
+    }
   };
 
   const deleteActivity = (value) => {
@@ -167,15 +227,25 @@ const RoutineInputForm = () => {
             </div>
           )}
 
+          {/* activities start */}
           {activities.length > 0 && (
             <ul className={styles.list_activity}>
               <h4 className={styles.activity_heading}>Activities</h4>
               {activities.map((item, idx) => (
                 <span className={styles.list_activity_item} key={idx}>
                   <li>
-                    {" "}
-                    {idx + 1}. {item?.activityName} time from{" "}
-                    {item?.activityStartTime} to {item?.activityEndTime}{" "}
+                    <strong>
+                      {idx + 1}. {item?.activityName || item?.mainActivityName}{" "}
+                      time:
+                    </strong>{" "}
+                    From{" "}
+                    {militaryTimeToStandard(
+                      item?.activityStartTime || item?.mainActivityStartTime
+                    )}{" "}
+                    to{" "}
+                    {militaryTimeToStandard(
+                      item?.activityEndTime || item?.mainActivityEndTime
+                    )}{" "}
                   </li>
                   <span
                     className={styles.dlt_icon}
@@ -189,9 +259,65 @@ const RoutineInputForm = () => {
               ))}
             </ul>
           )}
+          {/* main activity start */}
           <div className={styles.form_group}>
             <div>
-              <label htmlFor="activityName">Activity Name</label>
+              <label htmlFor="mainActivityName">Activity Name (Main)</label>
+              <select
+                name="mainActivityName"
+                id="mainActivityName"
+                value={mainActivity?.mainActivityName}
+                onChange={handleChangeActivity}
+              >
+                <option value="">--Select Activity--</option>
+                {mainActivities.map((item, idx) => (
+                  <option value={item} key={idx}>
+                    {item}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className={styles.half_width}>
+              <div>
+                <label htmlFor="mainActivityStartTime">Start Time</label>
+                <input
+                  type="time"
+                  name="mainActivityStartTime"
+                  id="mainActivityStartTime"
+                  className={styles.input}
+                  value={mainActivity?.mainActivityStartTime}
+                  onChange={handleChangeActivity}
+                />
+              </div>
+              <div>
+                <label htmlFor="mainActivityEndTime">End Time</label>
+                <input
+                  type="time"
+                  name="mainActivityEndTime"
+                  id="mainActivityEndTime"
+                  className={styles.input}
+                  value={mainActivity?.mainActivityEndTime}
+                  onChange={handleChangeActivity}
+                />
+              </div>
+            </div>
+            <div className={styles.add_btn_div}>
+              <button
+                title="Add new activity"
+                type="button"
+                className={styles.add_btn}
+                onClick={() => addActivity(true)}
+              >
+                {" "}
+                + Add
+              </button>
+            </div>
+          </div>
+          {/* main activity end */}
+          {/* ECA activity start */}
+          <div className={styles.form_group}>
+            <div>
+              <label htmlFor="activityName">Activity Name (ECA)</label>
               <input
                 type="text"
                 name="activityName"
@@ -230,13 +356,14 @@ const RoutineInputForm = () => {
                 title="Add new activity"
                 type="button"
                 className={styles.add_btn}
-                onClick={addActivity}
+                onClick={() => addActivity(false)}
               >
                 {" "}
                 + Add
               </button>
             </div>
           </div>
+          {/* activities end */}
         </form>
       </div>
     </>
