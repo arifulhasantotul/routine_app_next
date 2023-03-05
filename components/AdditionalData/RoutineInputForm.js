@@ -11,17 +11,15 @@ const RoutineInputForm = () => {
     target: "",
     wakingUpTime: "",
     sleepingTime: "",
+    moreActive: "",
   };
 
   const [formData, setFormData] = useState(initialData);
   const [errFormData, setErrFormData] = useState(initialData);
+  const [hardSubjects, setHardSubjects] = useState([]);
+  const [easySubjects, setEasySubjects] = useState([]);
   const [activities, setActivities] = useState([]);
-  const [mainActivities, setMainActivities] = useState([
-    "Coaching",
-    "Private",
-    "College",
-    "Batch",
-  ]);
+  const mainActivityOptions = ["Coaching", "Private", "College", "Batch"];
   const [mainActivity, setMainActivity] = useState({
     mainActivityName: "",
     mainActivityStartTime: "",
@@ -32,6 +30,45 @@ const RoutineInputForm = () => {
     activityStartTime: "",
     activityEndTime: "",
   });
+
+  const [newHardSubject, setNewHardSubject] = useState("");
+  const [newEasySubject, setNewEasySubject] = useState("");
+
+  const handleSubChange = (e) => {
+    const { name, value } = e.target;
+    if (!value) return;
+    if (name === "hardSubject") {
+      setNewHardSubject(value.trim());
+    } else {
+      setNewEasySubject(value.trim());
+    }
+  };
+  // console.log("new hard", newHardSubject);
+  // console.log("new easy", newEasySubject);
+  // console.log("hardSubjects", hardSubjects);
+  // console.log("easySubjects", easySubjects);
+  // console.log("formData", formData);
+
+  const handleAddSubject = (e, isHard = false) => {
+    e.preventDefault();
+    if (isHard) {
+      setHardSubjects((prv) => [...prv, newHardSubject]);
+      setNewHardSubject("");
+    } else {
+      setEasySubjects((prv) => [...prv, newEasySubject]);
+      setNewEasySubject("");
+    }
+  };
+
+  const handleDeleteSubject = (value, isHard = false) => {
+    if (isHard) {
+      const newSubjects = hardSubjects.filter((item) => item !== value);
+      setHardSubjects(newSubjects);
+    } else {
+      const newSubjects = easySubjects.filter((item) => item !== value);
+      setEasySubjects(newSubjects);
+    }
+  };
 
   const handleChangeActivity = (e) => {
     const { name, value } = e.target;
@@ -47,10 +84,6 @@ const RoutineInputForm = () => {
       }));
     }
   };
-
-  // console.log(activities);
-  // console.log("main", mainActivity);
-  // console.log("ECA", newActivity);
 
   const clearActivity = (isMainActivity = false) => {
     if (isMainActivity) {
@@ -270,7 +303,7 @@ const RoutineInputForm = () => {
                 onChange={handleChangeActivity}
               >
                 <option value="">--Select Activity--</option>
-                {mainActivities.map((item, idx) => (
+                {mainActivityOptions.map((item, idx) => (
                   <option value={item} key={idx}>
                     {item}
                   </option>
@@ -365,6 +398,123 @@ const RoutineInputForm = () => {
             </div>
           </div>
           {/* activities end */}
+
+          {/* hard subject list */}
+          {hardSubjects.length > 0 && (
+            <div className={styles.sub_wrapper}>
+              <h4 className={styles.activity_heading}>Hard Subjects</h4>
+              <div className={styles.list_subject}>
+                {hardSubjects.map((item, idx) => (
+                  <span className={styles.list_subject_item} key={idx}>
+                    <span>{item}</span>
+                    <span
+                      className={styles.dlt_icon}
+                      title="Remove hard subject from list"
+                    >
+                      <MdClose
+                        onClick={() => handleDeleteSubject(item, true)}
+                      />
+                    </span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* hard subjects start */}
+          <div className={styles.form_group}>
+            <span className={styles.sub_head}>
+              <label htmlFor="hardSubjects">Add New Hard Subject</label>
+              <button onClick={(e) => handleAddSubject(e, true)}>+</button>
+            </span>
+            <input
+              type="text"
+              name="hardSubject"
+              id="hardSubject"
+              className={styles.input}
+              value={newHardSubject}
+              placeholder="e.g. Higher Math, Physics, Chemistry, etc."
+              onChange={handleSubChange}
+            />
+          </div>
+          {/* hard subjects end */}
+          {/* Easy subjects */}
+          {easySubjects.length > 0 && (
+            <div className={styles.sub_wrapper}>
+              <h4 className={styles.activity_heading}>Easy Subjects</h4>
+              <div className={styles.list_subject}>
+                {easySubjects.map((item, idx) => (
+                  <span className={styles.list_subject_item} key={idx}>
+                    <span>{item}</span>
+                    <span
+                      className={styles.dlt_icon}
+                      title="Remove easy subject from list"
+                    >
+                      <MdClose
+                        onClick={() => handleDeleteSubject(item, false)}
+                      />
+                    </span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+          {/* easy subjects start */}
+          <div className={styles.form_group}>
+            <span className={styles.sub_head}>
+              <label htmlFor="easySubject">Add New Easy Subject</label>
+              <button onClick={(e) => handleAddSubject(e, false)}>+</button>
+            </span>
+            <input
+              type="text"
+              name="easySubject"
+              id="easySubject"
+              className={styles.input}
+              value={newEasySubject}
+              placeholder="e.g. ICT, English, General Math, etc."
+              onChange={handleSubChange}
+            />
+          </div>
+          {/* easy subjects end */}
+          <div className={styles.form_group}>
+            <label>When are you more active?</label>
+            <span className={styles.radio_opt}>
+              <input
+                name="moreActive"
+                type="radio"
+                id="moreActive"
+                value="day"
+                disabled={formData?.wakingUpTime ? false : true}
+                onChange={handleChange}
+              />
+              {formData?.wakingUpTime ? (
+                <label htmlFor="day">
+                  From {militaryTimeToStandard(formData?.wakingUpTime)} to 7:00
+                  PM
+                </label>
+              ) : (
+                <label>Please provide your waking up time</label>
+              )}
+            </span>
+            <span className={styles.radio_opt}>
+              <input
+                name="moreActive"
+                type="radio"
+                id="moreActive"
+                value="night"
+                disabled={formData?.sleepingTime ? false : true}
+                onChange={handleChange}
+              />
+              {formData?.sleepingTime ? (
+                <label htmlFor="night">
+                  From 7:00 PM to{" "}
+                  {militaryTimeToStandard(formData?.sleepingTime)}
+                </label>
+              ) : (
+                <label>Please provide your sleeping time</label>
+              )}
+            </span>
+          </div>
         </form>
       </div>
     </>
