@@ -1,11 +1,14 @@
+import RoundedFormButton from "@/components/FormButton/RoundedFormButton";
 import styles from "@/styles/RoutineInputForm.module.css";
-import { getDataFromStorage } from "@/utils/temporarySave";
-import { militaryTimeToStandard } from "@/utils/timeConversion";
+import { getDataFromStorage, saveToLocalStorage } from "@/utils/temporarySave";
+import { militaryTimeToStandardTime } from "@/utils/timeConversion";
+import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { MdClose } from "react-icons/md";
 import { checkValidation } from "./validation";
 
 const RoutineInputForm = () => {
+  const router = useRouter();
   const initialData = {
     name: "",
     target: "",
@@ -19,7 +22,14 @@ const RoutineInputForm = () => {
   const [hardSubjects, setHardSubjects] = useState([]);
   const [easySubjects, setEasySubjects] = useState([]);
   const [activities, setActivities] = useState([]);
-  const mainActivityOptions = ["Coaching", "Private", "College", "Batch"];
+  const mainActivityOptions = [
+    "Coaching",
+    "Private",
+    "College",
+    "Batch",
+    "School",
+    "University",
+  ];
   const [mainActivity, setMainActivity] = useState({
     mainActivityName: "",
     mainActivityStartTime: "",
@@ -36,11 +46,10 @@ const RoutineInputForm = () => {
 
   const handleSubChange = (e) => {
     const { name, value } = e.target;
-    if (!value) return;
     if (name === "hardSubject") {
-      setNewHardSubject(value.trim());
+      setNewHardSubject(value);
     } else {
-      setNewEasySubject(value.trim());
+      setNewEasySubject(value);
     }
   };
   // console.log("new hard", newHardSubject);
@@ -52,9 +61,15 @@ const RoutineInputForm = () => {
   const handleAddSubject = (e, isHard = false) => {
     e.preventDefault();
     if (isHard) {
+      if (hardSubjects.length >= 5) {
+        return alert("❌ Maximum 5 hard subjects can be added");
+      }
       setHardSubjects((prv) => [...prv, newHardSubject]);
       setNewHardSubject("");
     } else {
+      if (easySubjects.length >= 5) {
+        return alert("❌ Maximum 5 easy subjects can be added!");
+      }
       setEasySubjects((prv) => [...prv, newEasySubject]);
       setNewEasySubject("");
     }
@@ -149,9 +164,10 @@ const RoutineInputForm = () => {
   };
 
   const deleteActivity = (value) => {
-    const newActivities = activities.filter(
-      (item) => item.activityName !== value
-    );
+    const newActivities = activities.filter((item) => {
+      let newName = item.activityName || item.mainActivityName;
+      return newName !== value;
+    });
     setActivities(newActivities);
   };
 
@@ -163,23 +179,55 @@ const RoutineInputForm = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    try {
+      if (!activities.length) return alert("Please add at least one activity");
+      if (!hardSubjects.length)
+        return alert("Please add at least one hard subject");
+      if (!easySubjects.length)
+        return alert("Please add at least one easy subject");
+      const newData = {
+        name: formData?.name.trim() || "",
+        target: formData?.target.trim() || "",
+        sleepingTime: formData?.sleepingTime || "",
+        wakingUpTime: formData?.wakingUpTime || "",
+        moreActive: formData?.moreActive || "",
+        activities: activities || [],
+        hardSubjects: hardSubjects || [],
+        easySubjects: easySubjects || [],
+      };
+
+      saveToLocalStorage("routineInfo", newData);
+      router.push("/routine/output");
+    } catch (error) {
+      console.log(error);
+    }
   };
 
+  const handleReset = (e) => {};
+
   useEffect(() => {
-    const basicData = getDataFromStorage(localStorage, "routineAccount");
+    const basicData = getDataFromStorage(localStorage, "routineInfo");
     if (basicData) {
-      setFormData((prv) => ({
-        ...prv,
-        name: basicData?.name,
-      }));
+      setFormData({
+        name: basicData?.name || "",
+        target: basicData?.target || "",
+        sleepingTime: basicData?.sleepingTime || "",
+        wakingUpTime: basicData?.wakingUpTime || "",
+        moreActive: basicData?.moreActive || "",
+      });
+
+      setActivities(basicData?.activities || []);
+      setHardSubjects(basicData?.hardSubjects || []);
+      setEasySubjects(basicData?.easySubjects || []);
     }
   }, []);
+
   return (
     <>
       <div className={styles.form_wrapper}>
-        <h2>Additional Data</h2>
+        <h2>Routine Information</h2>
         <form className={styles.form} onSubmit={handleSubmit}>
           <div className={styles.form_group}>
             <label htmlFor="name">Name</label>
@@ -272,11 +320,11 @@ const RoutineInputForm = () => {
                       time:
                     </strong>{" "}
                     From{" "}
-                    {militaryTimeToStandard(
+                    {militaryTimeToStandardTime(
                       item?.activityStartTime || item?.mainActivityStartTime
                     )}{" "}
                     to{" "}
-                    {militaryTimeToStandard(
+                    {militaryTimeToStandardTime(
                       item?.activityEndTime || item?.mainActivityEndTime
                     )}{" "}
                   </li>
@@ -285,7 +333,11 @@ const RoutineInputForm = () => {
                     title="Remove activity from list"
                   >
                     <MdClose
-                      onClick={() => deleteActivity(item?.activityName)}
+                      onClick={() =>
+                        deleteActivity(
+                          item?.activityName || item?.mainActivityName
+                        )
+                      }
                     />
                   </span>
                 </span>
@@ -402,7 +454,9 @@ const RoutineInputForm = () => {
           {/* hard subject list */}
           {hardSubjects.length > 0 && (
             <div className={styles.sub_wrapper}>
-              <h4 className={styles.activity_heading}>Hard Subjects</h4>
+              <h4 className={styles.activity_heading}>
+                Hard Subjects (Max: 5)
+              </h4>
               <div className={styles.list_subject}>
                 {hardSubjects.map((item, idx) => (
                   <span className={styles.list_subject_item} key={idx}>
@@ -441,7 +495,9 @@ const RoutineInputForm = () => {
           {/* Easy subjects */}
           {easySubjects.length > 0 && (
             <div className={styles.sub_wrapper}>
-              <h4 className={styles.activity_heading}>Easy Subjects</h4>
+              <h4 className={styles.activity_heading}>
+                Easy Subjects (Max: 5)
+              </h4>
               <div className={styles.list_subject}>
                 {easySubjects.map((item, idx) => (
                   <span className={styles.list_subject_item} key={idx}>
@@ -486,11 +542,13 @@ const RoutineInputForm = () => {
                 value="day"
                 disabled={formData?.wakingUpTime ? false : true}
                 onChange={handleChange}
+                checked={formData?.moreActive === "day"}
+                required
               />
               {formData?.wakingUpTime ? (
                 <label htmlFor="day">
-                  From {militaryTimeToStandard(formData?.wakingUpTime)} to 7:00
-                  PM
+                  From {militaryTimeToStandardTime(formData?.wakingUpTime)} to
+                  7:00 PM
                 </label>
               ) : (
                 <label>Please provide your waking up time</label>
@@ -504,16 +562,34 @@ const RoutineInputForm = () => {
                 value="night"
                 disabled={formData?.sleepingTime ? false : true}
                 onChange={handleChange}
+                checked={formData?.moreActive === "night"}
+                required
               />
               {formData?.sleepingTime ? (
                 <label htmlFor="night">
                   From 7:00 PM to{" "}
-                  {militaryTimeToStandard(formData?.sleepingTime)}
+                  {militaryTimeToStandardTime(formData?.sleepingTime)}
                 </label>
               ) : (
                 <label>Please provide your sleeping time</label>
               )}
             </span>
+          </div>
+
+          <div className={styles.btn_group}>
+            <RoundedFormButton
+              type="button"
+              value="Reset"
+              color="#ed4141"
+              bgColor="#fff"
+              onClick={handleReset}
+            />
+            <RoundedFormButton
+              type="submit"
+              value="Create"
+              color="#29fd53"
+              bgColor="#fff"
+            />
           </div>
         </form>
       </div>

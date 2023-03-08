@@ -1,10 +1,12 @@
 import styles from "@/styles/Register.module.css";
 import countryData from "@/utils/countriesData.json";
 import { getDataFromStorage, saveToLocalStorage } from "@/utils/temporarySave";
+import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import RoundedFormButton from "../FormButton/RoundedFormButton";
 
 const Register = () => {
+  const router = useRouter();
   const initialData = {
     name: "",
     email: "",
@@ -109,15 +111,20 @@ const Register = () => {
     document.getElementById("phone").value = "";
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const invalidData = Object.values(errFormData).filter((item) => item);
-    if (invalidData.length > 0) {
-      alert("Please fill up the form correctly!");
-      return;
-    }
+    try {
+      const invalidData = Object.values(errFormData).filter((item) => item);
+      if (invalidData.length > 0) {
+        alert("Please fill up the form correctly!");
+        return;
+      }
 
-    saveToLocalStorage("routineAccount", formData);
+      saveToLocalStorage("routineAccount", formData);
+      router.push("/routine");
+    } catch (err) {
+      console.log("❌ Error in Register.js/handleSubmit \n", err);
+    }
   };
 
   useEffect(() => {
