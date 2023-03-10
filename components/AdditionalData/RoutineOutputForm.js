@@ -5,6 +5,7 @@ import {
   militaryTimeToStandardTime,
   next30Minutes,
 } from "@/utils/timeConversion";
+import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 
@@ -18,8 +19,6 @@ const RoutineOutputForm = () => {
     moreActive: "",
   };
   const [formData, setFormData] = useState(initialData);
-  const [hardSubjects, setHardSubjects] = useState([]);
-  const [easySubjects, setEasySubjects] = useState([]);
   const [activities, setActivities] = useState([]);
   const [allSubjects, setAllSubjects] = useState([]);
   const [finalRoutine, setFinalRoutine] = useState([]);
@@ -31,15 +30,15 @@ const RoutineOutputForm = () => {
     return timeA.localeCompare(timeB);
   });
 
-  // console.log(formData);
-  // console.log("sort", activities);
+  finalRoutine.sort((a, b) => {
+    return a.topicStartTime.localeCompare(b.topicStartTime);
+  });
 
-  const generateRoutineData = () => {
-    const routineArr = [];
-    const { wakingUpTime, sleepingTime } = formData;
+  const firstPartOfRoutine = (subIdx) => {
+    const firstPartData = [];
+    const { wakingUpTime } = formData;
     const firstActivityTime =
       activities[0]?.activityStartTime || activities[0]?.mainActivityStartTime;
-    let subIdx = 0;
 
     let firstActivityTimeDiff = differenceBetweenTwoTime(
       wakingUpTime,
@@ -50,17 +49,85 @@ const RoutineOutputForm = () => {
       firstActivityTimeDiff / firstCount > 1 &&
       subIdx < allSubjects.length
     ) {
-      routineArr.push({
+      firstPartData.push({
         topicName: allSubjects[subIdx],
-        topicStartTime: militaryTimeToStandardTime(wakingUpTime),
-        topicEndTime: militaryTimeToStandardTime(firstActivityTime),
+        topicStartTime: wakingUpTime,
+        topicEndTime: firstActivityTime,
       });
       subIdx++;
       firstCount += 30;
     }
+    return { firstPartData, firsPartIdx: subIdx };
+  };
+
+  const lastPartOfRoutine = (subIdx) => {
+    const lastPartOfData = [];
+    const { sleepingTime, moreActive } = formData;
+    let lastActivityTime;
+    if (moreActive === "day") {
+      lastActivityTime =
+        activities[activities.length - 1]?.activityEndTime ||
+        activities[activities.length - 1]?.mainActivityEndTime;
+    } else {
+      for (let i = 0; i < activities.length; i++) {
+        let actTime =
+          activities[i]?.activityEndTime || activities[i]?.mainActivityEndTime;
+        if (actTime > "19:00") {
+          lastActivityTime = actTime;
+          break;
+        }
+      }
+    }
+
+    let totalTimeDiff;
+    if (lastActivityTime > sleepingTime) {
+      let firstDiff = differenceBetweenTwoTime(lastActivityTime, "23:59");
+      let secondDiff = differenceBetweenTwoTime("00:00", sleepingTime);
+      totalTimeDiff = firstDiff + secondDiff;
+    } else {
+      totalTimeDiff = differenceBetweenTwoTime(lastActivityTime, sleepingTime);
+    }
+
+    let lastCount = 29;
+    let lastStartTime = lastActivityTime;
+
+    while (totalTimeDiff / lastCount > 1 && subIdx < allSubjects.length) {
+      lastPartOfData.push({
+        topicName: allSubjects[subIdx],
+        topicStartTime: lastStartTime,
+        topicEndTime: next30Minutes(lastStartTime),
+      });
+      subIdx++;
+      lastStartTime = next30Minutes(lastStartTime);
+      lastCount += 30;
+    }
+    return { lastPartOfData, lastPartIdx: subIdx };
+  };
+
+  const generateRoutineData = () => {
+    const routineArr = [];
+    const { moreActive } = formData;
+    let subIdx = 0;
+
+    if (moreActive === "day") {
+      const { firstPartData, firsPartIdx } = firstPartOfRoutine(subIdx);
+      routineArr.push(...firstPartData);
+      subIdx = firsPartIdx;
+    } else {
+      const { lastPartOfData, lastPartIdx } = lastPartOfRoutine(subIdx);
+      routineArr.push(...lastPartOfData);
+      subIdx = lastPartIdx;
+    }
 
     for (let i = 0; i < activities.length; i++) {
-      // console.log("allSubjects", activities[i]);
+      routineArr.push({
+        topicName: activities[i].activityName || activities[i].mainActivityName,
+        topicStartTime:
+          activities[i]?.activityStartTime ||
+          activities[i]?.mainActivityStartTime,
+        topicEndTime:
+          activities[i]?.activityEndTime || activities[i]?.mainActivityEndTime,
+      });
       let startTime =
         activities[i]?.activityEndTime || activities[i]?.mainActivityEndTime;
       let endTime =
@@ -73,8 +140,8 @@ const RoutineOutputForm = () => {
       while (timeDiff / middleCount > 1 && subIdx < allSubjects.length) {
         routineArr.push({
           topicName: allSubjects[subIdx],
-          topicStartTime: militaryTimeToStandardTime(newStartTime),
-          topicEndTime: militaryTimeToStandardTime(next30Minutes(newStartTime)),
+          topicStartTime: newStartTime,
+          topicEndTime: next30Minutes(newStartTime),
         });
         subIdx++;
         newStartTime = next30Minutes(newStartTime);
@@ -82,36 +149,18 @@ const RoutineOutputForm = () => {
       }
     }
 
-    const lastActivityTime =
-      activities[activities.length - 1]?.activityEndTime ||
-      activities[activities.length - 1]?.mainActivityEndTime;
-    // console.log("lust", lastActivityTime);
-    let lastActivityTimeDiff = differenceBetweenTwoTime(
-      sleepingTime,
-      lastActivityTime
-    );
-
-    console.log("lastActivityTimeDiff", lastActivityTimeDiff);
-    let lastCount = 29;
-    let lastStartTime = lastActivityTime;
-    while (
-      lastActivityTimeDiff / lastCount > 1 &&
-      subIdx < allSubjects.length
-    ) {
-      routineArr.push({
-        topicName: allSubjects[subIdx],
-        topicStartTime: militaryTimeToStandardTime(lastStartTime),
-        topicEndTime: militaryTimeToStandardTime(next30Minutes(lastStartTime)),
-      });
-      subIdx++;
-      lastStartTime = next30Minutes(lastStartTime);
-      lastCount += 30;
+    if (moreActive !== "day") {
+      const { firstPartData, firsPartIdx } = firstPartOfRoutine(subIdx);
+      routineArr.push(...firstPartData);
+      subIdx = firsPartIdx;
+    } else {
+      const { lastPartOfData, lastPartIdx } = lastPartOfRoutine(subIdx);
+      routineArr.push(...lastPartOfData);
+      subIdx = lastPartIdx;
     }
 
-    console.log("routineArr", routineArr);
+    setFinalRoutine(routineArr);
   };
-
-  console.log(allSubjects);
 
   useEffect(() => {
     generateRoutineData();
@@ -129,21 +178,8 @@ const RoutineOutputForm = () => {
         moreActive: basicData?.moreActive || "",
       });
 
-      if (basicData?.moreActive === "day") {
-        setAllSubjects([
-          ...basicData?.hardSubjects,
-          ...basicData?.easySubjects,
-        ]);
-      } else {
-        setAllSubjects([
-          ...basicData?.easySubjects,
-          ...basicData?.hardSubjects,
-        ]);
-      }
-
+      setAllSubjects([...basicData?.hardSubjects, ...basicData?.easySubjects]);
       setActivities(basicData?.activities || []);
-      setHardSubjects(basicData?.hardSubjects || []);
-      setEasySubjects(basicData?.easySubjects || []);
     }
   }, []);
   return (
@@ -158,6 +194,9 @@ const RoutineOutputForm = () => {
           <div className={styles.list_activity_item}>
             <strong>Sleeping Time: </strong>{" "}
             {militaryTimeToStandardTime(formData?.sleepingTime)}
+          </div>
+          <div className={styles.list_activity_item}>
+            <strong>Active Time: </strong> {formData?.moreActive}
           </div>
           {activities.length > 0 && (
             <ul className={styles.list_activity}>
@@ -178,23 +217,28 @@ const RoutineOutputForm = () => {
                       item?.activityEndTime || item?.mainActivityEndTime
                     )}{" "}
                   </li>
-                  {/* <span
-                    className={styles.dlt_icon}
-                    title="Remove activity from list"
-                  >
-                    <MdClose
-                      onClick={() =>
-                        deleteActivity(
-                          item?.activityName || item?.mainActivityName
-                        )
-                      }
-                    />
-                  </span> */}
+                </span>
+              ))}
+            </ul>
+          )}
+          {finalRoutine.length > 0 && (
+            <ul className={styles.list_activity}>
+              <h4 className={styles.activity_heading}>Routine</h4>
+              {finalRoutine.map((item, idx) => (
+                <span className={styles.list_activity_item} key={idx}>
+                  <li>
+                    <strong>
+                      {idx + 1}. {item?.topicName}:
+                    </strong>{" "}
+                    From {militaryTimeToStandardTime(item?.topicStartTime)} to{" "}
+                    {militaryTimeToStandardTime(item?.topicEndTime)}{" "}
+                  </li>
                 </span>
               ))}
             </ul>
           )}
         </div>
+        <Link href="/routine">Back</Link>
       </div>
     </>
   );
