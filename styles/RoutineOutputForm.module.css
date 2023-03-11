@@ -10,11 +10,12 @@
 
 .form {
   width: 450px;
-  padding: 15px 20px;
+  padding: 15px 10px;
   border-radius: 10px;
   box-shadow: var(--bg_form_white_shadow);
   color: var(--dark_text);
   background: var(--bg_form_white);
+  border-radius: 5px;
 }
 
 .form_group {
@@ -251,4 +252,14 @@
   display: flex;
   align-items: center;
   margin-left: 20px;
+}
+
+.form_head {
+  text-align: center;
+}
+
+.head {
+  font-size: 20px;
+  font-weight: bold;
+  letter-spacing: 0.7px;
 }

@@ -52,11 +52,6 @@ const RoutineInputForm = () => {
       setNewEasySubject(value);
     }
   };
-  // console.log("new hard", newHardSubject);
-  // console.log("new easy", newEasySubject);
-  // console.log("hardSubjects", hardSubjects);
-  // console.log("easySubjects", easySubjects);
-  // console.log("formData", formData);
 
   const handleAddSubject = (e, isHard = false) => {
     e.preventDefault();

@@ -5,6 +5,14 @@ import {
   militaryTimeToStandardTime,
   next30Minutes,
 } from "@/utils/timeConversion";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+} from "@mui/material";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
@@ -64,20 +72,10 @@ const RoutineOutputForm = () => {
     const lastPartOfData = [];
     const { sleepingTime, moreActive } = formData;
     let lastActivityTime;
-    if (moreActive === "day") {
-      lastActivityTime =
-        activities[activities.length - 1]?.activityEndTime ||
-        activities[activities.length - 1]?.mainActivityEndTime;
-    } else {
-      for (let i = 0; i < activities.length; i++) {
-        let actTime =
-          activities[i]?.activityEndTime || activities[i]?.mainActivityEndTime;
-        if (actTime > "19:00") {
-          lastActivityTime = actTime;
-          break;
-        }
-      }
-    }
+
+    lastActivityTime =
+      activities[activities.length - 1]?.activityEndTime ||
+      activities[activities.length - 1]?.mainActivityEndTime;
 
     let totalTimeDiff;
     if (lastActivityTime > sleepingTime) {
@@ -90,7 +88,6 @@ const RoutineOutputForm = () => {
 
     let lastCount = 29;
     let lastStartTime = lastActivityTime;
-
     while (totalTimeDiff / lastCount > 1 && subIdx < allSubjects.length) {
       lastPartOfData.push({
         topicName: allSubjects[subIdx],
@@ -101,6 +98,7 @@ const RoutineOutputForm = () => {
       lastStartTime = next30Minutes(lastStartTime);
       lastCount += 30;
     }
+
     return { lastPartOfData, lastPartIdx: subIdx };
   };
 
@@ -176,6 +174,7 @@ const RoutineOutputForm = () => {
         sleepingTime: basicData?.sleepingTime || "",
         wakingUpTime: basicData?.wakingUpTime || "",
         moreActive: basicData?.moreActive || "",
+        // moreActive: "night",
       });
 
       setAllSubjects([...basicData?.hardSubjects, ...basicData?.easySubjects]);
@@ -186,58 +185,110 @@ const RoutineOutputForm = () => {
     <>
       <div className={styles.form_wrapper}>
         <h2>Prep Stone Routine Maker</h2>
-        <div className={styles.form}>
-          <div className={styles.list_activity_item}>
-            <strong> Waking Up Time:</strong>{" "}
-            {militaryTimeToStandardTime(formData?.wakingUpTime)}
-          </div>
-          <div className={styles.list_activity_item}>
-            <strong>Sleeping Time: </strong>{" "}
-            {militaryTimeToStandardTime(formData?.sleepingTime)}
-          </div>
-          <div className={styles.list_activity_item}>
-            <strong>Active Time: </strong> {formData?.moreActive}
-          </div>
-          {activities.length > 0 && (
-            <ul className={styles.list_activity}>
-              <h4 className={styles.activity_heading}>Activities</h4>
-              {activities.map((item, idx) => (
-                <span className={styles.list_activity_item} key={idx}>
-                  <li>
-                    <strong>
-                      {idx + 1}. {item?.activityName || item?.mainActivityName}{" "}
-                      time:
-                    </strong>{" "}
-                    From{" "}
-                    {militaryTimeToStandardTime(
-                      item?.activityStartTime || item?.mainActivityStartTime
-                    )}{" "}
-                    to{" "}
-                    {militaryTimeToStandardTime(
-                      item?.activityEndTime || item?.mainActivityEndTime
-                    )}{" "}
-                  </li>
-                </span>
-              ))}
-            </ul>
-          )}
-          {finalRoutine.length > 0 && (
-            <ul className={styles.list_activity}>
-              <h4 className={styles.activity_heading}>Routine</h4>
-              {finalRoutine.map((item, idx) => (
-                <span className={styles.list_activity_item} key={idx}>
-                  <li>
-                    <strong>
-                      {idx + 1}. {item?.topicName}:
-                    </strong>{" "}
-                    From {militaryTimeToStandardTime(item?.topicStartTime)} to{" "}
-                    {militaryTimeToStandardTime(item?.topicEndTime)}{" "}
-                  </li>
-                </span>
-              ))}
-            </ul>
-          )}
+        <div className={styles.upper_div}>
+          <div className={styles.left}>Name: {formData?.name}</div>
+          <div className={styles.right}>Target: {formData?.target}</div>
         </div>
+        <div className={styles.form}>
+          <h3 className={styles.form_head}>
+            {" "}
+            <u> QNA Publication</u>
+          </h3>
+          {finalRoutine.length > 0 ? (
+            <TableContainer>
+              <Table sx={{ maxWidth: 500 }} className={styles.form}>
+                <TableHead>
+                  <TableRow>
+                    <TableCell
+                      sx={{
+                        fontWeight: "bold",
+                        fontSize: "15px",
+                        color: "#6a63a9",
+                        letterSpacing: "0.8px",
+                        textTransform: "uppercase",
+                      }}
+                      align="center"
+                    >
+                      Topic
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        fontWeight: "bold",
+                        fontSize: "15px",
+                        color: "#6a63a9",
+                        letterSpacing: "0.8px",
+                        textTransform: "uppercase",
+                      }}
+                      align="center"
+                    >
+                      Start Time
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        fontWeight: "bold",
+                        fontSize: "15px",
+                        color: "#6a63a9",
+                        letterSpacing: "0.8px",
+                        textTransform: "uppercase",
+                      }}
+                      align="center"
+                    >
+                      End Time
+                    </TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  <TableRow
+                    sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+                    className={
+                      finalRoutine.length % 2 === 0
+                        ? styles.list_activity_item
+                        : ""
+                    }
+                  >
+                    <TableCell align="center">Wake Up</TableCell>
+                    <TableCell align="center"></TableCell>
+                    <TableCell align="center">
+                      {militaryTimeToStandardTime(formData?.wakingUpTime)}
+                    </TableCell>
+                  </TableRow>
+                  {finalRoutine.map((item, idx) => (
+                    <TableRow
+                      key={idx}
+                      sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+                      className={idx % 2 === 1 ? styles.list_activity_item : ""}
+                    >
+                      <TableCell align="center">{item.topicName}</TableCell>
+                      <TableCell align="center">
+                        {militaryTimeToStandardTime(item?.topicStartTime)}
+                      </TableCell>
+                      <TableCell align="center">
+                        {militaryTimeToStandardTime(item?.topicEndTime)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  <TableRow
+                    sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+                    className={
+                      finalRoutine.length % 2 === 1
+                        ? styles.list_activity_item
+                        : ""
+                    }
+                  >
+                    <TableCell align="center">Sleep</TableCell>
+                    <TableCell align="center">
+                      {militaryTimeToStandardTime(formData?.sleepingTime)}
+                    </TableCell>
+                    <TableCell align="center">
+                      {militaryTimeToStandardTime(formData?.wakingUpTime)}
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </TableContainer>
+          ) : null}
+        </div>
+
         <Link href="/routine">Back</Link>
       </div>
     </>
